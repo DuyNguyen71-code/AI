@@ -1,16 +1,15 @@
+export const config = {
+  api: {
+    bodyParser: true
+  }
+};
+
 export default async function handler(req, res) {
   try {
-    let body = req.body;
+    const { text } = req.body || {};
 
-    if (typeof body === "string") {
-      body = JSON.parse(body);
-    }
-
-    const text = body?.text;
-    const voiceId = body?.voiceId;
-
-    if (!text || !voiceId) {
-      return res.status(400).send("Thiếu text hoặc voiceId");
+    if (!text) {
+      return res.status(400).send("Thiếu text");
     }
 
     const response = await fetch(
@@ -36,9 +35,9 @@ export default async function handler(req, res) {
     const audioBuffer = await response.arrayBuffer();
 
     res.setHeader("Content-Type", "audio/mpeg");
-    res.status(200).send(Buffer.from(audioBuffer));
+    return res.status(200).send(Buffer.from(audioBuffer));
 
   } catch (err) {
-    res.status(500).send(err.message);
+    return res.status(500).send(err.message);
   }
 }
