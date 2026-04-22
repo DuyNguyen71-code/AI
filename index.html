@@ -1,161 +1,83 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Clone Giọng Nói</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    .container {
-      width: 90%;
-      max-width: 700px;
-      background: rgba(255,255,255,0.08);
-      padding: 30px;
-      border-radius: 20px;
-    }
-
-    input, textarea, select, button, a {
-      width: 100%;
-      margin-top: 12px;
-      padding: 12px;
-      border-radius: 10px;
-      border: none;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    button, a {
-      background: #3b82f6;
-      color: white;
-      cursor: pointer;
-      text-align: center;
-      text-decoration: none;
-    }
-
-    audio {
-      width: 100%;
-      margin-top: 15px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Tạo Giọng Nói</title>
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
+.box{
+width:90%;
+max-width:600px;
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+}
+textarea,button,audio{
+width:100%;
+margin-top:10px;
+padding:12px;
+border-radius:8px;
+border:none;
+font-size:16px;
+}
+button{
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+</style>
 </head>
 <body>
+<div class="box">
+<h2>🎤 AI Tạo Giọng Nói</h2>
 
-<div class="container">
-  <h1>🎤 AI Clone Giọng Nói</h1>
+<textarea id="text" placeholder="Nhập nội dung cần đọc"></textarea>
 
-  <textarea id="text" placeholder="Nhập nội dung cần đọc..."></textarea>
+<button onclick="generateAudio()">Tạo giọng nói</button>
 
-  <input type="text" id="voiceName" placeholder="Nhập tên giọng">
-
-  <button onclick="saveVoice()">Lưu giọng mẫu</button>
-
-  <select id="savedVoices"></select>
-
-  <button onclick="generateAudio()">Tạo giọng nói</button>
-
-  <audio id="audio" controls></audio>
-
-  <a id="downloadLink" style="display:none;" download="voice.mp3">Tải MP3</a>
+<audio id="audio" controls></audio>
 </div>
 
 <script>
-let voices = JSON.parse(localStorage.getItem("voices") || "[]");
-
-function renderVoices() {
-  const select = document.getElementById("savedVoices");
-  select.innerHTML = "";
-
-  voices.forEach(v => {
-    const option = document.createElement("option");
-    option.value = v.voice_id;
-    option.textContent = v.name;
-    select.appendChild(option);
-  });
-}
-
-function saveVoice() {
-  const voiceName = document.getElementById("voiceName").value.trim();
-
-  if (!voiceName) {
-    alert("Vui lòng nhập tên giọng");
-    return;
-  }
-
-  const voiceId = "voice_" + Date.now();
-
-  voices.push({
-    name: voiceName,
-    voice_id: voiceId
-  });
-
-  localStorage.setItem("voices", JSON.stringify(voices));
-
-  renderVoices();
-
-  document.getElementById("savedVoices").value = voiceId;
-
-  alert("Đã lưu giọng thành công");
-}
-
 async function generateAudio() {
   const text = document.getElementById("text").value.trim();
-  const voiceId = document.getElementById("savedVoices").value;
-  const audio = document.getElementById("audio");
-  const downloadLink = document.getElementById("downloadLink");
 
-  if (!text || !voiceId) {
-    alert("Thiếu text hoặc voiceId");
+  if (!text) {
+    alert("Vui lòng nhập nội dung");
     return;
   }
 
-  try {
-    const response = await fetch("/api/tts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text: text,
-        voiceId: voiceId
-      })
-    });
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text: text
+    })
+  });
 
-    if (!response.ok) {
-      const error = await response.text();
-      alert(error);
-      return;
-    }
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-
-    audio.src = url;
-    audio.play();
-
-    downloadLink.href = url;
-    downloadLink.style.display = "block";
-
-  } catch (err) {
-    alert("Lỗi: " + err.message);
+  if (!response.ok) {
+    const error = await response.text();
+    alert(error);
+    return;
   }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  document.getElementById("audio").src = url;
 }
-
-renderVoices();
 </script>
-
 </body>
 </html>
