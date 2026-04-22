@@ -15,13 +15,16 @@
       min-height: 100vh;
       margin: 0;
     }
+
     .container {
       background: rgba(255,255,255,0.08);
       padding: 30px;
       border-radius: 20px;
       width: 90%;
       max-width: 700px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
+
     textarea, select, input {
       width: 100%;
       margin-top: 10px;
@@ -30,6 +33,7 @@
       font-size: 16px;
       border: none;
     }
+
     button, a {
       display: block;
       width: 100%;
@@ -44,9 +48,14 @@
       text-decoration: none;
       cursor: pointer;
     }
+
     audio {
       width: 100%;
       margin-top: 15px;
+    }
+
+    h1 {
+      text-align: center;
     }
   </style>
 </head>
@@ -88,8 +97,12 @@
     function renderVoices() {
       const select = document.getElementById("savedVoices");
       select.innerHTML = "";
+
       voices.forEach(v => {
-        select.innerHTML += `<option value="${v.voice_id}">${v.name}</option>`;
+        const option = document.createElement("option");
+        option.value = v.voice_id;
+        option.textContent = v.name;
+        select.appendChild(option);
       });
     }
 
@@ -106,20 +119,30 @@
       formData.append("name", voiceName);
       formData.append("files", fileInput.files[0]);
 
-      const response = await fetch("/api/addVoice", {
-        method: "POST",
-        body: formData
-      });
+      try {
+        const response = await fetch("/api/addVoice", {
+          method: "POST",
+          body: formData
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.voice_id) {
-        voices.push({ name: voiceName, voice_id: data.voice_id });
-        localStorage.setItem("voices", JSON.stringify(voices));
-        renderVoices();
-        alert("Đã lưu giọng thành công");
-      } else {
-        alert("Lỗi lưu giọng");
+        if (data.voice_id) {
+          voices.push({
+            name: voiceName,
+            voice_id: data.voice_id
+          });
+
+          localStorage.setItem("voices", JSON.stringify(voices));
+          renderVoices();
+
+          alert("Đã lưu giọng thành công");
+        } else {
+          alert("Lỗi lưu giọng");
+        }
+
+      } catch (err) {
+        alert("Lỗi: " + err.message);
       }
     }
 
@@ -130,29 +153,42 @@
       const audio = document.getElementById("audio");
       const downloadLink = document.getElementById("downloadLink");
 
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ text, voiceId })
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        alert(error);
+      if (!text || !voiceId) {
+        alert("Vui lòng nhập nội dung và chọn giọng");
         return;
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      try {
+        const response = await fetch("/api/tts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            text: text,
+            voiceId: voiceId
+          })
+        });
 
-      audio.src = url;
-      audio.playbackRate = parseFloat(speed);
-      audio.play();
+        if (!response.ok) {
+          const error = await response.text();
+          alert("Lỗi tạo giọng: " + error);
+          return;
+        }
 
-      downloadLink.href = url;
-      downloadLink.style.display = "block";
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        audio.src = url;
+        audio.playbackRate = parseFloat(speed);
+        await audio.play();
+
+        downloadLink.href = url;
+        downloadLink.style.display = "block";
+
+      } catch (err) {
+        alert("Lỗi hệ thống: " + err.message);
+      }
     }
 
     renderVoices();
