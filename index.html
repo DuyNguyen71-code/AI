@@ -2,60 +2,16 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Tạo Giọng Nói</title>
-<style>
-body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-margin:0;
-}
-.box{
-width:90%;
-max-width:600px;
-background:#1e293b;
-padding:20px;
-border-radius:15px;
-}
-textarea,button,audio{
-width:100%;
-margin-top:10px;
-padding:12px;
-border-radius:8px;
-border:none;
-font-size:16px;
-}
-button{
-background:#2563eb;
-color:white;
-cursor:pointer;
-}
-</style>
+<title>Test API</title>
 </head>
 <body>
-<div class="box">
-<h2>🎤 AI Tạo Giọng Nói</h2>
 
-<textarea id="text" placeholder="Nhập nội dung cần đọc"></textarea>
-
-<button onclick="generateAudio()">Tạo giọng nói</button>
-
-<audio id="audio" controls></audio>
-</div>
+<textarea id="text"></textarea>
+<button onclick="send()">Gửi</button>
 
 <script>
-async function generateAudio() {
-  const text = document.getElementById("text").value.trim();
-
-  if (!text) {
-    alert("Vui lòng nhập nội dung");
-    return;
-  }
+async function send() {
+  const text = document.getElementById("text").value;
 
   const response = await fetch("/api/tts", {
     method: "POST",
@@ -67,17 +23,11 @@ async function generateAudio() {
     })
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    alert(error);
-    return;
-  }
+  const data = await response.json();
 
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  document.getElementById("audio").src = url;
+  alert(JSON.stringify(data));
 }
 </script>
+
 </body>
 </html>
