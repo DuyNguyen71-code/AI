@@ -2,78 +2,66 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>AI Tạo Giọng Nói</title>
+  <title>AI Voice Clone</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .box {
-      width: 90%;
-      max-width: 600px;
-      background: #1e293b;
-      padding: 20px;
-      border-radius: 15px;
-    }
-    textarea, button, audio {
-      width: 100%;
-      margin-top: 10px;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      cursor: pointer;
-    }
+    body { font-family: Arial; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .box { width: 90%; max-width: 600px; background: #1e293b; padding: 20px; border-radius: 15px; }
+    textarea, button, input, audio { width: 100%; margin-top: 10px; padding: 12px; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
+    button { background: #2563eb; color: white; cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h2>🎤 AI Tạo Giọng Nói</h2>
+    <h2>🎤 AI Voice Clone</h2>
+
+    <input type="file" id="voiceFile" accept="audio/*">
+    <button onclick="uploadVoice()">Upload giọng mẫu</button>
 
     <textarea id="text" placeholder="Nhập nội dung cần đọc"></textarea>
+    <button onclick="generateVoice()">Tạo giọng nói</button>
 
-    <button onclick="generateAudio()">Tạo giọng nói</button>
-
-    <audio id="audio" controls></audio>
+    <audio id="player" controls></audio>
+    <a id="download" download="voice.mp3">Tải về</a>
   </div>
 
   <script>
-    async function generateAudio() {
-      const text = document.getElementById("text").value.trim();
+    async function uploadVoice() {
+      const file = document.getElementById("voiceFile").files[0];
+      if (!file) { alert("Chọn file giọng!"); return; }
 
-      if (!text) {
-        alert("Vui lòng nhập nội dung!");
-        return;
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/addvoice", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.voice_id) {
+        alert("Voice ID đã lưu: " + data.voice_id);
+        localStorage.setItem("voice_id", data.voice_id);
+      } else {
+        alert("Lỗi: " + JSON.stringify(data));
       }
+    }
 
-      const response = await fetch("/api/tts", {
+    async function generateVoice() {
+      const text = document.getElementById("text").value.trim();
+      if (!text) { alert("Nhập nội dung!"); return; }
+
+      const voice_id = localStorage.getItem("voice_id") || "JBFqnCBsd6RMkjVDRZzb"; // fallback voice
+      const res = await fetch("/api/tts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ text: text })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, voice_id })
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        alert("Lỗi: " + error);
+      if (!res.ok) {
+        alert(await res.text());
         return;
       }
 
-      const blob = await response.blob();
+      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      document.getElementById("audio").src = url;
+      document.getElementById("player").src = url;
+      document.getElementById("download").href = url;
     }
   </script>
 </body>
