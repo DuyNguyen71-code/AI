@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     }
 
     const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb",
       {
         method: "POST",
         headers: {
@@ -36,9 +36,9 @@ export default async function handler(req, res) {
     const audioBuffer = await response.arrayBuffer();
 
     res.setHeader("Content-Type", "audio/mpeg");
-    return res.status(200).send(Buffer.from(audioBuffer));
+    res.status(200).send(Buffer.from(audioBuffer));
 
   } catch (err) {
-    return res.status(500).send(err.message);
+    res.status(500).send(err.message);
   }
 }
