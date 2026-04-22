@@ -1,11 +1,20 @@
+export const config = {
+  api: {
+    bodyParser: true, // đảm bảo parse JSON body
+  },
+};
+
 export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Chỉ hỗ trợ POST" });
+  }
+
+  const { text } = req.body || {};
+  if (!text) {
+    return res.status(400).json({ error: "Thiếu text trong body" });
+  }
+
   try {
-    const text = req.body?.text;
-
-    if (!text) {
-      return res.status(400).send("Thiếu text");
-    }
-
     const response = await fetch(
       "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb",
       {
@@ -27,11 +36,9 @@ export default async function handler(req, res) {
     }
 
     const audioBuffer = await response.arrayBuffer();
-
     res.setHeader("Content-Type", "audio/mpeg");
     return res.status(200).send(Buffer.from(audioBuffer));
-
   } catch (err) {
-    return res.status(500).send(err.message);
+    return res.status(500).json({ error: err.message });
   }
 }
