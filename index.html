@@ -72,16 +72,30 @@ button:hover{
 let voices = [];
 
 function loadVoices() {
-  voices = speechSynthesis.getVoices();
   const voiceSelect = document.getElementById("voiceSelect");
   voiceSelect.innerHTML = "";
 
-  voices.forEach((voice, index) => {
+  voices = speechSynthesis.getVoices();
+
+  const vietnameseVoices = voices.filter(voice =>
+    voice.lang === "vi-VN" || voice.lang.startsWith("vi")
+  );
+
+  if (vietnameseVoices.length === 0) {
+    const option = document.createElement("option");
+    option.textContent = "Không có giọng tiếng Việt";
+    voiceSelect.appendChild(option);
+    return;
+  }
+
+  vietnameseVoices.forEach((voice, index) => {
     const option = document.createElement("option");
     option.value = index;
-    option.textContent = `${voice.name} (${voice.lang})`;
+    option.textContent = voice.name;
     voiceSelect.appendChild(option);
   });
+
+  window.filteredVoices = vietnameseVoices;
 }
 
 speechSynthesis.onvoiceschanged = loadVoices;
@@ -97,24 +111,16 @@ function speakText() {
   }
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = voices[voiceIndex];
+  utterance.voice = window.filteredVoices[voiceIndex];
   utterance.rate = speed;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
 }
 
-function downloadAudio() {
-  const text = document.getElementById("text").value.trim();
-  const blob = new Blob([text], { type: "text/plain" });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.getElementById("audioDownload");
-
-  link.href = url;
-  link.style.display = "block";
+function stopText() {
+  speechSynthesis.cancel();
 }
+
 loadVoices();
 </script>
-</body>
-</html>
