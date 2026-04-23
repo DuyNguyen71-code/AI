@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Google TTS Tiếng Việt</title>
+<title>Google TTS Proxy</title>
 <style>
 body{
   font-family:Arial,sans-serif;
@@ -41,9 +41,6 @@ button,a{
 button:hover,a:hover{
   background:#1d4ed8;
 }
-#audioPlayer{
-  display:none;
-}
 #downloadBtn{
   display:none;
 }
@@ -51,7 +48,7 @@ button:hover,a:hover{
 </head>
 <body>
 <div class="container">
-  <h1>🎤 Google TTS Tiếng Việt</h1>
+  <h1>🎤 Tạo Giọng Tiếng Việt</h1>
 
   <textarea id="text" rows="6" placeholder="Nhập nội dung cần đọc..."></textarea>
 
@@ -63,7 +60,7 @@ button:hover,a:hover{
 </div>
 
 <script>
-function generateAudio() {
+async function generateAudio() {
   const text = document.getElementById("text").value.trim();
 
   if (!text) {
@@ -71,13 +68,27 @@ function generateAudio() {
     return;
   }
 
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+  const response = await fetch("/api/tts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ text })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    alert(err);
+    return;
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
 
   const audio = document.getElementById("audioPlayer");
   const downloadBtn = document.getElementById("downloadBtn");
 
   audio.src = url;
-  audio.style.display = "block";
   audio.play();
 
   downloadBtn.href = url;
