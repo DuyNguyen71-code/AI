@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Voice Generator</title>
+<title>Google TTS Tiếng Việt</title>
 <style>
 body{
   font-family:Arial,sans-serif;
@@ -19,8 +19,10 @@ body{
   padding:25px;
   border-radius:15px;
 }
-h1{text-align:center;}
-textarea,select,button,a{
+h1{
+  text-align:center;
+}
+textarea,button,audio,a{
   width:100%;
   margin-top:12px;
   padding:12px;
@@ -36,91 +38,51 @@ button,a{
   text-align:center;
   text-decoration:none;
 }
-button:hover{
+button:hover,a:hover{
   background:#1d4ed8;
 }
-#audioDownload{
+#audioPlayer{
+  display:none;
+}
+#downloadBtn{
   display:none;
 }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🎤 AI Voice Generator</h1>
+  <h1>🎤 Google TTS Tiếng Việt</h1>
 
-  <label>Nhập nội dung:</label>
   <textarea id="text" rows="6" placeholder="Nhập nội dung cần đọc..."></textarea>
 
-  <label>Chọn giọng:</label>
-  <select id="voiceSelect"></select>
+  <button onclick="generateAudio()">🔊 Tạo giọng nói</button>
 
-  <label>Tốc độ đọc:</label>
-  <select id="speed">
-    <option value="0.8">Chậm</option>
-    <option value="1" selected>Bình thường</option>
-    <option value="1.2">Nhanh</option>
-    <option value="1.5">Rất nhanh</option>
-  </select>
+  <audio id="audioPlayer" controls></audio>
 
-  <button onclick="speakText()">🔊 Phát giọng</button>
-  <button onclick="downloadAudio()">⬇ Tạo file tải về</button>
-
-  <a id="audioDownload" download="voice.wav">⬇ Tải file âm thanh</a>
+  <a id="downloadBtn" download="voice.mp3">⬇ Tải file MP3</a>
 </div>
 
 <script>
-let voices = [];
-
-function loadVoices() {
-  const voiceSelect = document.getElementById("voiceSelect");
-  voiceSelect.innerHTML = "";
-
-  voices = speechSynthesis.getVoices();
-
-  const vietnameseVoices = voices.filter(voice =>
-    voice.lang === "vi-VN" || voice.lang.startsWith("vi")
-  );
-
-  if (vietnameseVoices.length === 0) {
-    const option = document.createElement("option");
-    option.textContent = "Không có giọng tiếng Việt";
-    voiceSelect.appendChild(option);
-    return;
-  }
-
-  vietnameseVoices.forEach((voice, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = voice.name;
-    voiceSelect.appendChild(option);
-  });
-
-  window.filteredVoices = vietnameseVoices;
-}
-
-speechSynthesis.onvoiceschanged = loadVoices;
-
-function speakText() {
+function generateAudio() {
   const text = document.getElementById("text").value.trim();
-  const voiceIndex = document.getElementById("voiceSelect").value;
-  const speed = parseFloat(document.getElementById("speed").value);
 
   if (!text) {
     alert("Vui lòng nhập nội dung");
     return;
   }
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = window.filteredVoices[voiceIndex];
-  utterance.rate = speed;
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
 
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
+  const audio = document.getElementById("audioPlayer");
+  const downloadBtn = document.getElementById("downloadBtn");
+
+  audio.src = url;
+  audio.style.display = "block";
+  audio.play();
+
+  downloadBtn.href = url;
+  downloadBtn.style.display = "block";
 }
-
-function stopText() {
-  speechSynthesis.cancel();
-}
-
-loadVoices();
 </script>
+</body>
+</html>
