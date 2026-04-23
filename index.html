@@ -1,68 +1,110 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>AI Voice Clone</title>
-  <style>
-    body { font-family: Arial; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-    .box { width: 90%; max-width: 600px; background: #1e293b; padding: 20px; border-radius: 15px; }
-    textarea, button, input, audio { width: 100%; margin-top: 10px; padding: 12px; border-radius: 8px; border: none; font-size: 16px; box-sizing: border-box; }
-    button { background: #2563eb; color: white; cursor: pointer; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Voice Generator</title>
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+.container{
+  max-width: 700px;
+  margin: 50px auto;
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 15px;
+}
+h1{
+  text-align: center;
+}
+textarea, select, button{
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 16px;
+}
+button{
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+button:hover{
+  background: #1d4ed8;
+}
+</style>
 </head>
 <body>
-  <div class="box">
-    <h2>🎤 AI Voice Clone</h2>
+<div class="container">
+  <h1>🎤 AI Voice Generator</h1>
 
-    <input type="file" id="voiceFile" accept="audio/*">
-    <button onclick="uploadVoice()">Upload giọng mẫu</button>
+  <label>Nhập nội dung:</label>
+  <textarea id="text" rows="6" placeholder="Nhập nội dung cần đọc..."></textarea>
 
-    <textarea id="text" placeholder="Nhập nội dung cần đọc"></textarea>
-    <button onclick="generateVoice()">Tạo giọng nói</button>
+  <label>Chọn giọng:</label>
+  <select id="voiceSelect"></select>
 
-    <audio id="player" controls></audio>
-    <a id="download" download="voice.mp3">Tải về</a>
-  </div>
+  <label>Tốc độ đọc:</label>
+  <select id="speed">
+    <option value="0.8">Chậm</option>
+    <option value="1" selected>Bình thường</option>
+    <option value="1.2">Nhanh</option>
+    <option value="1.5">Rất nhanh</option>
+  </select>
 
-  <script>
-    async function uploadVoice() {
-      const file = document.getElementById("voiceFile").files[0];
-      if (!file) { alert("Chọn file giọng!"); return; }
+  <button onclick="speakText()">🔊 Tạo giọng nói</button>
+  <button onclick="stopText()">⏹ Dừng đọc</button>
+</div>
 
-      const formData = new FormData();
-      formData.append("file", file);
+<script>
+let voices = [];
 
-      const res = await fetch("/api/addvoice", { method: "POST", body: formData });
-      const data = await res.json();
-      if (data.voice_id) {
-        alert("Voice ID đã lưu: " + data.voice_id);
-        localStorage.setItem("voice_id", data.voice_id);
-      } else {
-        alert("Lỗi: " + JSON.stringify(data));
-      }
-    }
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  const voiceSelect = document.getElementById("voiceSelect");
+  voiceSelect.innerHTML = "";
 
-    async function generateVoice() {
-      const text = document.getElementById("text").value.trim();
-      if (!text) { alert("Nhập nội dung!"); return; }
+  voices.forEach((voice, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${voice.name} (${voice.lang})`;
+    voiceSelect.appendChild(option);
+  });
+}
 
-      const voice_id = localStorage.getItem("voice_id") || "JBFqnCBsd6RMkjVDRZzb"; // fallback voice
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice_id })
-      });
+speechSynthesis.onvoiceschanged = loadVoices;
 
-      if (!res.ok) {
-        alert(await res.text());
-        return;
-      }
+function speakText() {
+  const text = document.getElementById("text").value.trim();
+  const voiceIndex = document.getElementById("voiceSelect").value;
+  const speed = parseFloat(document.getElementById("speed").value);
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      document.getElementById("player").src = url;
-      document.getElementById("download").href = url;
-    }
-  </script>
+  if (!text) {
+    alert("Vui lòng nhập nội dung");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = voices[voiceIndex];
+  utterance.rate = speed;
+  utterance.pitch = 1;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
+}
+
+function stopText() {
+  speechSynthesis.cancel();
+}
+
+loadVoices();
+</script>
 </body>
 </html>
